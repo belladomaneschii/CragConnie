@@ -1,7 +1,7 @@
 from flask import Flask, request, jsonify
 from flask_cors import CORS
 from datetime import datetime
-from static.score_cal import calculate_score
+from static.score_cal import calculate_score, IDEAL_TEMP, IDEAL_HUMIDITY, MARGIN
 import sqlite3
 
 app = Flask(__name__)
@@ -64,26 +64,52 @@ def post_rating():
 @app.route("/score", methods=["GET"])
 def score():
     conn = get_db_connection()
-    reading = conn.execute("""
+
+    latest = conn.execute("""
         SELECT temperature, humidity
         FROM readings
         WHERE crag = 'The Cave'
         ORDER BY timestamp DESC
         LIMIT 1
     """).fetchone()
+
+    if not latest:
+        conn.close()
+        return jsonify({"error": "No readings found"}), 404
+
+    temp = latest["temperature"]
+    humidity = latest["humidity"]
+
+ 
+    margin_temp = IDEAL_TEMP * MARGIN
+    margin_humidity = IDEAL_HUMIDITY * MARGIN
+
+    nearby_ratings = conn.execute("""
+        SELECT rating
+        FROM ratings
+        JOIN readings ON ratings.timestamp = readings.timestamp
+        WHERE readings.crag = 'The Cave'
+          AND ratings.crag = 'The Cave'
+          AND ABS(readings.temperature - ?) <= ?
+          AND ABS(readings.humidity - ?) <= ?
+    """, (temp, margin_temp, humidity, margin_humidity)).fetchall()
+
     conn.close()
 
-    if reading:
-        temp = reading["temperature"]
-        humidity = reading["humidity"]
-        score = calculate_score(temp, humidity)
-        return jsonify({
-            "temp": temp,
-            "humidity": humidity,
-            "score": score
-        })
+    if nearby_ratings:
+        avg_rating = sum([r["rating"] for r in nearby_ratings]) / len(nearby_ratings)
     else:
-        return jsonify({"error": "No readings found"}), 404
+        avg_rating = 2.5  
+
+    score = calculate_score(temp, humidity, avg_rating)
+
+    return jsonify({
+        "temp": temp,
+        "humidity": humidity,
+        "avg_rating_used": avg_rating if nearby_ratings else None,
+        "matching_ratings": len(nearby_ratings),
+        "score": round(score, 1)
+    })
 
 
 
