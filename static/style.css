@@ -191,3 +191,17 @@ button:hover {
   color: gold;
   transition: color 0.2s;
 }
+
+/* ========== CONNIE SCORE ========== */
+.score-box {
+  background-color: #fff7e6;
+  border: 2px solid #f0c36d;
+  color: #a65d03;
+  font-size: 2rem;
+  font-weight: bold;
+  padding: 1.5rem 2rem;
+  border-radius: 10px;
+  max-width: 300px;
+  margin: 2rem auto;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.05);
+}

@@ -1,6 +1,7 @@
 from flask import Flask, request, jsonify
 from flask_cors import CORS
 from datetime import datetime
+from static.score_cal import calculate_score
 import sqlite3
 
 app = Flask(__name__)
@@ -56,6 +57,35 @@ def post_rating():
         return jsonify({"message": "Rating saved"}), 200
     else:
         return jsonify({"error": "Invalid rating"}), 400
+    
+# ------------------------
+# 2. POST SCORE
+# ------------------------
+@app.route("/score", methods=["GET"])
+def score():
+    conn = get_db_connection()
+    reading = conn.execute("""
+        SELECT temperature, humidity
+        FROM readings
+        WHERE crag = 'The Cave'
+        ORDER BY timestamp DESC
+        LIMIT 1
+    """).fetchone()
+    conn.close()
+
+    if reading:
+        temp = reading["temperature"]
+        humidity = reading["humidity"]
+        score = calculate_score(temp, humidity)
+        return jsonify({
+            "temp": temp,
+            "humidity": humidity,
+            "score": score
+        })
+    else:
+        return jsonify({"error": "No readings found"}), 404
+
+
 
 # ------------------------
 # 3. GET ALL RATINGS

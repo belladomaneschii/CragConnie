@@ -73,6 +73,26 @@ if (stars.length && ratingInput) {
       });
     });
   });
+
+  // Fetch and display Connie score
+async function fetchScore() {
+  try {
+    const res = await fetch("http://localhost:5001/score");
+    const data = await res.json();
+
+    if (data.score !== undefined) {
+      document.getElementById("scoreDisplay").textContent = `🔥 ${data.score.toFixed(1)} / 200`;
+    } else {
+      document.getElementById("scoreDisplay").textContent = "No score available.";
+    }
+  } catch (err) {
+    document.getElementById("scoreDisplay").textContent = "Error loading score.";
+  }
+}
+
+// Call it once on load
+fetchScore();
+
 // ========== Displaying the history chart ==========
 // ========== currenty has false test data inserted  ==========
 const ctx = document.getElementById("historyChart");
