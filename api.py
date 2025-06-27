@@ -1,11 +1,27 @@
-from flask import Flask, request, jsonify
+from flask import Flask, request, jsonify, render_template
 from flask_cors import CORS
 from datetime import datetime
 from static.score_cal import calculate_score, IDEAL_TEMP, IDEAL_HUMIDITY, MARGIN
 import sqlite3
 
 app = Flask(__name__)
+# add decorateds
 CORS(app)
+
+
+@app.route("/")
+def home():
+    return render_template("index.html")
+
+@app.route('/crag/<name>')
+def crag_page(name):
+    # Replace hyphens with spaces if you use slugs (optional)
+    crag_name = name.replace("-", " ").title()
+
+    if crag_name not in ["The Cave", "Little Babylon"]:
+        return render_template("404.html", crag_name=crag_name), 404
+
+    return render_template("crag.html", crag_name=crag_name)
 
 # ------------------------
 # DATABASE CONNECTION
@@ -20,13 +36,16 @@ def get_db_connection():
 # ------------------------
 @app.route('/latest', methods=['GET'])
 def get_latest():
+    crag = request.args.get("crag")
+    if not crag:
+        return jsonify({"error": "Missing required query parameter: crag"}), 400
     conn = get_db_connection()
     reading = conn.execute("""
         SELECT * FROM readings
-        WHERE crag = 'The Cave'
+        WHERE crag = ?
         ORDER BY timestamp DESC
         LIMIT 1
-    """).fetchone()
+    """, (crag,)).fetchone()
     conn.close()
 
     if reading:
@@ -63,15 +82,19 @@ def post_rating():
 # ------------------------
 @app.route("/score", methods=["GET"])
 def score():
+    crag = request.args.get("crag")
+    if not crag:
+        return jsonify({"error": "Missing required query parameter: crag"}), 400
+
     conn = get_db_connection()
 
     latest = conn.execute("""
         SELECT temperature, humidity
         FROM readings
-        WHERE crag = 'The Cave'
+        WHERE crag = ?
         ORDER BY timestamp DESC
         LIMIT 1
-    """).fetchone()
+    """, (crag,)).fetchone()
 
     if not latest:
         conn.close()
@@ -88,11 +111,11 @@ def score():
         SELECT rating
         FROM ratings
         JOIN readings ON ratings.timestamp = readings.timestamp
-        WHERE readings.crag = 'The Cave'
-          AND ratings.crag = 'The Cave'
+        WHERE readings.crag = ?
+          AND ratings.crag = ?
           AND ABS(readings.temperature - ?) <= ?
           AND ABS(readings.humidity - ?) <= ?
-    """, (temp, margin_temp, humidity, margin_humidity)).fetchall()
+    """, (crag, crag, temp, margin_temp, humidity, margin_humidity)).fetchall()
 
     conn.close()
 

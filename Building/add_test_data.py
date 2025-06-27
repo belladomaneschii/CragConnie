@@ -11,14 +11,14 @@ for i in range(20):
     humidity = round(random.uniform(30, 90), 1)
     time = datetime.now() - timedelta(minutes=i*15)
     cursor.execute("INSERT INTO readings (crag, temperature, humidity, timestamp) VALUES (?, ?, ?, ?)",
-                   ("The Cave", temp, humidity, time))
+                   ("Little Babylon", temp, humidity, time))
 
 # Insert 10 random ratings
 for i in range(10):
     rating = random.randint(1, 5)
     time = datetime.now() - timedelta(hours=i)
     cursor.execute("INSERT INTO ratings (crag, rating, timestamp) VALUES (?, ?, ?)",
-                   ("The Cave", rating, time))
+                   ("Little Babylon", rating, time))
 
 conn.commit()
 conn.close()

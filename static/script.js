@@ -1,8 +1,8 @@
 document.addEventListener("DOMContentLoaded", function () {
-
+   const cragName = document.body.dataset.crag;
     // ========== Calling to the API ==========
       function updateFromAPI() {
-      fetch("http://127.0.0.1:5001/latest")
+      fetch(`/latest?crag=${encodeURIComponent(cragName)}`)
         .then(res => res.json())
         .then(data => {
           console.log("Fetched data from API:", data);
@@ -17,9 +17,10 @@ document.addEventListener("DOMContentLoaded", function () {
     }
 
   // ========== Nav bar Drop Down ==========
-  const crags = [
-    { name: "The Cave", link: "cave.html"},
-  ];
+const crags = [
+  { name: "The Cave", link: "/crag/The%20Cave" },
+  { name: "Little Babylon", link: "/crag/Little%20Babylon" }
+];
 
   const dropdown = document.getElementById("locationDropdown");
   if (dropdown) {
@@ -55,10 +56,7 @@ document.addEventListener("DOMContentLoaded", function () {
       title: "Humidity (%)",
       levelColors: ["#bde0fe", "#a2d2ff", "#ffb3c6"]
     });
-
-
-
-
+1
 
   // ========== Funtioality for the stars ==========
 const stars = document.querySelectorAll(".star-rating .star");
@@ -80,7 +78,8 @@ if (stars.length && ratingInput) {
   // Fetch and display Connie score
 async function fetchScore() {
   try {
-    const res = await fetch("http://localhost:5001/score");
+    const res = await fetch(`/score?crag=${encodeURIComponent(cragName)}`);
+;
     const data = await res.json();
 
     if (data.score !== undefined) {
