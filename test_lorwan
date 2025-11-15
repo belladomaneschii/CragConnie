@@ -1,0 +1,114 @@
+import requests
+import base64
+import struct
+import json
+from datetime import datetime
+
+def create_lorawan_payload(temperature, humidity):
+    """
+    Create a LoRaWAN payload similar to what TTN would send
+    Temperature and humidity are scaled by 100 and packed as int16
+    """
+    # Scale and pack the values
+    temp_int = int(temperature * 100)
+    humidity_int = int(humidity * 100)
+    
+    # Pack as big-endian signed 16-bit integers
+    payload_bytes = struct.pack('>hh', temp_int, humidity_int)
+    
+    # Encode as base64
+    payload_b64 = base64.b64encode(payload_bytes).decode('utf-8')
+    
+    return payload_b64
+
+def simulate_ttn_uplink(device_id, temperature, humidity, api_url="http://localhost:5001/lorawan/uplink"):
+    """
+    Simulate a The Things Network uplink message
+    """
+    payload = create_lorawan_payload(temperature, humidity)
+    
+    # This mimics the structure TTN sends
+    ttn_message = {
+        "end_device_ids": {
+            "device_id": device_id,
+            "application_ids": {
+                "application_id": "crag-connie-sensors"
+            }
+        },
+        "uplink_message": {
+            "frm_payload": payload,
+            "rx_metadata": [{
+                "gateway_ids": {
+                    "gateway_id": "test-gateway"
+                },
+                "time": datetime.now().isoformat() + "Z",
+                "rssi": -45,
+                "snr": 10
+            }],
+            "settings": {
+                "data_rate": {
+                    "lora": {
+                        "bandwidth": 125000,
+                        "spreading_factor": 7
+                    }
+                }
+            }
+        }
+    }
+    
+    print(f"\n🚀 Sending LoRaWAN uplink for device: {device_id}")
+    print(f"   Temperature: {temperature}°C")
+    print(f"   Humidity: {humidity}%")
+    print(f"   Payload (base64): {payload}")
+    
+    try:
+        response = requests.post(
+            api_url,
+            json=ttn_message,
+            headers={"Content-Type": "application/json"}
+        )
+        
+        if response.status_code == 200:
+            print(f"   ✓ Success! Response: {response.json()}")
+        else:
+            print(f"   ✗ Error {response.status_code}: {response.text}")
+            
+    except requests.exceptions.ConnectionError:
+        print(f"   ✗ Connection Error: Is your Flask server running on {api_url}?")
+    except Exception as e:
+        print(f"   ✗ Error: {str(e)}")
+
+if __name__ == "__main__":
+    print("=" * 60)
+    print("LoRaWAN Uplink Simulator for CragConnie")
+    print("=" * 60)
+    
+    # Test scenarios
+    test_cases = [
+        {
+            "device_id": "cave-sensor-01",
+            "temperature": 14.5,
+            "humidity": 55.0,
+        },
+        {
+            "device_id": "babylon-sensor-01",
+            "temperature": 18.2,
+            "humidity": 62.5,
+        },
+        {
+            "device_id": "cave-sensor-01",
+            "temperature": 10.3,
+            "humidity": 45.0,
+        }
+    ]
+    
+    for i, test in enumerate(test_cases, 1):
+        simulate_ttn_uplink(
+            device_id=test["device_id"],
+            temperature=test["temperature"],
+            humidity=test["humidity"]
+        )
+        
+    print("\n" + "=" * 60)
+    print("Test complete! Check your database for new readings.")
+    print("=" * 60)

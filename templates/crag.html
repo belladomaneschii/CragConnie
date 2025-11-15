@@ -2,18 +2,20 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <title>{{ crag_name }}</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>{{ crag_name }} | Crag Connie</title>
   <link rel="stylesheet" href="../static/style.css">
   <script src="https://cdn.jsdelivr.net/npm/raphael@2.3.0/raphael.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/justgage@1.3.5/dist/justgage.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <script src="../static/script.js" defer></script>
+  <link href="https://fonts.googleapis.com/css2?family=Quicksand:wght@400;600&display=swap" rel="stylesheet">
 </head>
 
 <body data-crag="{{ crag_name }}">
   <nav>
     <div class="nav-left">
-      <a href="/">Home</a>
+      <a href="/"> Home</a>
     </div>
     <div class="nav-right">
       <div class="dropdown">
@@ -25,17 +27,20 @@
   </nav>
 
   <main class="container">
-    <h1>{{ crag_name }}</h1>
+    <div class="crag-header">
+      <h1>{{ crag_name }}</h1>
+      <p class="last-updated">Last updated: <span id="lastUpdateTime">Loading...</span></p>
+    </div>
 
     <!-- LIVE CONDITIONS -->
     <section id="live-readings" class="card">
       <h2>Live Conditions</h2>
       <div class="gauges">
-        <div class="gauge">
+        <div class="gauge-wrapper">
           <div id="tempGauge"></div>
           <div class="label">Temperature (°C)</div>
         </div>
-        <div class="gauge">
+        <div class="gauge-wrapper">
           <div id="humidityGauge"></div>
           <div class="label">Humidity (%)</div>
         </div>
@@ -43,41 +48,73 @@
     </section>
 
     <!-- CONNIE SCORE -->
-    <section id="connie-score" class="card">
-      <h2>Today's Score </h2>
+    <section id="connie-score" class="card score-card">
+      <h2>Today's Connie Score</h2>
       <div id="scoreDisplay" class="score-box">Loading...</div>
+      <p class="score-description">Based on temperature, humidity, and climber ratings</p>
+    </section>
+
+    <!-- CONDITIONS CHART -->
+    <section id="conditions-section" class="card">
+      <h2> Conditions History</h2>
+      <div class="toggle-buttons">
+        <button id="btn-12h" class="range-btn active">Last 12 Hours</button>
+        <button id="btn-7d" class="range-btn">Last 7 Days</button>
+      </div>
+      <canvas id="conditionsChart" width="600" height="300"></canvas>
     </section>
 
     <!-- USER RATING -->
-    <section id="rating" class="card">
-      <h2>How’s {{ crag_name }} feeling?</h2>
+    <section id="rating" class="card rating-card">
+      <h2>How's {{ crag_name }} feeling?</h2>
+      <p class="rating-subtitle">Help others by sharing your experience</p>
+      
       <form id="rating-form">
-        <div class="star-rating">
-          <span class="star" data-value="1">★</span>
-          <span class="star" data-value="2">★</span>
-          <span class="star" data-value="3">★</span>
-          <span class="star" data-value="4">★</span>
-          <span class="star" data-value="5">★</span>
+        <div class="rating-section">
+          <label class="form-label">Your rating:</label>
+          <div class="star-rating">
+            <span class="star" data-value="1">★</span>
+            <span class="star" data-value="2">★</span>
+            <span class="star" data-value="3">★</span>
+            <span class="star" data-value="4">★</span>
+            <span class="star" data-value="5">★</span>
+          </div>
+          <input type="hidden" id="ratingInput" name="rating" required />
         </div>
-        <input type="hidden" id="ratingInput" name="rating" />
-        <button type="submit">Submit</button>
+
+        <div class="rating-section">
+          <label class="form-label">When did you visit?</label>
+          <select id="visitTime" name="visitTime" class="time-select">
+            <option value="now">Right now</option>
+            <option value="1h">About 1 hour ago</option>
+            <option value="2h">About 2 hours ago</option>
+            <option value="4h">About 4 hours ago</option>
+            <option value="today">Earlier today</option>
+          </select>
+        </div>
+
+        <div class="rating-section checkbox-section">
+          <label class="checkbox-label">
+            <input type="checkbox" id="windSurfers" name="windSurfers" />
+            <span class="checkbox-text">Did you see wind sufers on the way?</span>
+          </label>
+          <p class="checkbox-hint">This helps us understand wind patterns</p>
+        </div>
+
+        <button type="submit" class="submit-btn">Submit Rating</button>
+        <div id="submitMessage" class="submit-message"></div>
       </form>
     </section>
 
-    <!-- HISTORY GRAPH -->
-    <section id="history" class="card">
-      <h2>Crag History</h2>
-
-       <h1>COMING SOON</h1>
-
-      
-       <!-- <canvas id="historyChart" width="400" height="200"></canvas>
-      <div class="history-controls">
-        <button onclick="loadHistory('day')">Today</button>
-        <button onclick="loadHistory('week')">1 Week</button>
-        <button onclick="loadHistory('month')">1 Month</button> -->
-      </div>
+    <!-- RAINFALL -->
+    <section id="rainfall" class="card">
+      <h2>🌧️ Rainfall (Last 7 Days)</h2>
+      <canvas id="rainfallChart" width="600" height="300" data-lat="{{ lat }}" data-lon="{{ lon }}"></canvas>
     </section>
   </main>
+
+  <footer>
+    <p>Made for the climbing community | Data updates every hour - 9am to 9pm</p>
+  </footer>
 </body>
 </html>
